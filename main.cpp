@@ -74,7 +74,7 @@ void updateMeshes(igl::opengl::glfw::Viewer &viewer)
   MatrixXd currV(scene.meshes[0].origPositions.size()/3,3);
   for (int j=0;j<scene.meshes[0].origPositions.size()/3;j++)
     currV.row(j)<<scene.meshes[0].currPositions.segment(3*j,3).transpose();
-  viewer.core.align_camera_center(currV);
+  viewer.core().align_camera_center(currV);
   for (int i=0;i<scene.meshes.size();i++){
     MatrixXd currV(scene.meshes[i].origPositions.size()/3,3);
     for (int j=0;j<scene.meshes[i].origPositions.size()/3;j++)
@@ -88,7 +88,7 @@ void updateMeshes(igl::opengl::glfw::Viewer &viewer)
   viewer.data_list[0].show_lines=false;
   viewer.data_list[0].set_colors(platColor.replicate(scene.meshes[0].F.rows(),1));
   viewer.data_list[0].set_face_based(true);
-  //viewer.core.align_camera_center(scene.meshes[0].currV);
+  //viewer.core().align_camera_center(scene.meshes[0].currV);
   
   //updating constraint viewing
   MatrixXi constF;
@@ -118,8 +118,8 @@ bool key_down(igl::opengl::glfw::Viewer &viewer, unsigned char key, int modifier
 {
   if (key == ' ')
   {
-    viewer.core.is_animating = !viewer.core.is_animating;
-    if (viewer.core.is_animating)
+    viewer.core().is_animating = !viewer.core().is_animating;
+    if (viewer.core().is_animating)
       cout<<"Simulation running"<<endl;
     else
       cout<<"Simulation paused"<<endl;
@@ -128,7 +128,7 @@ bool key_down(igl::opengl::glfw::Viewer &viewer, unsigned char key, int modifier
   
   if (key == 'S')
   {
-    if (!viewer.core.is_animating){
+    if (!viewer.core().is_animating){
       scene.updateScene(timeStep, CRCoeff, tolerance, maxIterations);
       currTime+=timeStep;
       updateMeshes(viewer);
@@ -147,7 +147,7 @@ bool pre_draw(igl::opengl::glfw::Viewer &viewer)
   using namespace Eigen;
   using namespace std;
   
-  if (viewer.core.is_animating){
+  if (viewer.core().is_animating){
     scene.updateScene(timeStep, CRCoeff, tolerance, maxIterations);
     currTime+=timeStep;
     //cout <<"currTime: "<<currTime<<endl;
@@ -169,11 +169,11 @@ class CustomMenu : public igl::opengl::glfw::imgui::ImGuiMenu
     // Add new group
     if (ImGui::CollapsingHeader("Algorithm Options", ImGuiTreeNodeFlags_DefaultOpen))
     {
-      ImGui::InputFloat("CR Coeff",&CRCoeff,0,0,3);
+      ImGui::InputFloat("CR Coeff",&CRCoeff,0,0,"%.2f");
       
       
       if (ImGui::InputFloat("Time Step", &timeStep)) {
-        mgpViewer.core.animation_max_fps = (((int)1.0/timeStep));
+        mgpViewer.core().animation_max_fps = (((int)1.0/timeStep));
       }
     }
   }
@@ -211,14 +211,14 @@ int main(int argc, char *argv[])
       mgpViewer.append_mesh();
     //mgpViewer.data_list[i].set_mesh(scene.meshes[i].currV, scene.meshes[i].F);
   }
-  //mgpViewer.core.align_camera_center(scene.meshes[0].currV);
+  //mgpViewer.core().align_camera_center(scene.meshes[0].currV);
   
   //constraints mesh (for lines)
   mgpViewer.append_mesh();
   mgpViewer.callback_pre_draw = &pre_draw;
   mgpViewer.callback_key_down = &key_down;
-  mgpViewer.core.is_animating = false;
-  mgpViewer.core.animation_max_fps = 50.;
+  mgpViewer.core().is_animating = false;
+  mgpViewer.core().animation_max_fps = 50.;
   updateMeshes(mgpViewer);
   CustomMenu menu;
   mgpViewer.plugins.push_back(&menu);
