@@ -1,11 +1,11 @@
 # Practical 3: Finite-Element Soft-Body Deformation
 
-## Handout date: 23/Mar/2019.
+## Handout date: 19/Mar/2021.
 
-## Deadline: 4/Apr/2019 13:00PM.
+## Deadline: 6/Apr/2021 09:00AM.
 
 
-The third practical is about simulating soft bodies with the finite-element method learned in class, where the material is covered in Lecture 8 and its associated lecture notes. The system will handle constraints for you, but you will not be tested on them in the basic version.
+The third practical is about simulating soft bodies with the finite-element method learned in class, where the material is covered in Lecture 9 and its associated lecture notes (about soft-body simulation). The system will handle basic constraints for you, and you will not be tested on them in the basic version.
 
 
 The objective of the practical are:
@@ -22,9 +22,9 @@ The practical runs in the same time loop (that can also be run step-by-step) as 
 
 The first considerable difference in the representation of the mesh from the previous practicals is that ```origPositions``` replaces ```origV``` as a big vector in the ordering of $xyzxyz$ (3 number per vertex, total size $3\left| V \right|$), instead of a matrix where vertex coordinates are on rows. This is because you will need this form for the FE method matrix formulation. The rest of the file, including constraints resolution, is adapted to this. Moreover, the scene keeps a huge vector of all stacked coordinate vectors of the mesh, to make the constraint resolution a flat process that does not distinguish meshes---but you do not necessarily have to touch this in the practical, so it's FYI.
 
-The second considerable difference is that every vertex now has its own volume and mass, and reacts in the world as its own mesh, for the purpose of collisions and constraints. The relationship between the different vertices of the same mesh is generally (unless constrained) done by the forces enacted on them by the FE system. So there is no more total mass and inertia tensor. As an example, in a collision only the colliding vertices move; the deformation this cause creates internal forces the move the entire object. As linear FE is far from perfect, this should cause some visual artifacts that you can witness in the demo.
+The second considerable difference is that every vertex now has its own volume and mass, and reacts in the world as its own independent object, for the purpose of collisions and constraints. The relationship between the different vertices of the same mesh is generally (unless constrained) done by the forces enacted on them by the FE system. So there is no more total mass and inertia tensor. As an example, in a collision only the colliding vertices move; the deformation this causes generates internal forces that move the entire object. As linear FE is far from perfect, this should cause some visual artifacts that you can witness in the demo.
 
-The objects move in time steps by altering each vertex of the tet mesh, by solving the finite-element equation for movement as learnt in class (*Lecture 8*). For this, you will set up the mass $M$, damping $D$, and stiffness $K$ matrices in the beginning of time, and whenever the time step changes. Moreover, you will set up the Cholesky solver that factorizes the left-hand side $A$ of the entire system *once* in every *change* of time step (so it might be only once in the beginning of time unless you are fond of playing with $\Delta t$ alot).
+The objects move in time steps by altering each vertex of the tet mesh, where the deformation is computed by solving the finite-element equation for movement as learnt in class (*Lecture 9*). For this, you will set up the mass $M$, damping $D$, and stiffness $K$ matrices at the beginning of time, and only again whenever the time step-size changes. Moreover, you will set up the Cholesky solver that factorizes the left-hand side $A$ of the entire system *once* in every *change* of time step (so it might be only once in the beginning of time unless you are keen to play with $\Delta t$).
 
 Note that every vertex has one velocity; this practical will not explicitly model rigid-body behavior with angular velocity in the basic setting.
 
@@ -45,7 +45,7 @@ Finite-element integration consists of two main steps that you will implement:
 
 ### Matrix constrution
 
-At the beginning of time, or any change to the time step, you have to construct the basic matrices $M$, $K$ and $D$, and consequently the left-hand side matrix $A=M+\Delta t D+\Delta t^2 K$. Those all have to be sparse matrices (of the data type ``Eigen::SparseMatrix<double>``). You have to fill them in using COO triplet format with `Eigen::Triplet<double>` as learnt in class. Then, you can see the Cholesky decomposition code preparing the solver. This is done in functon `createGlobalMatrices()`.
+At the beginning of time, or any change to the time step, you have to construct the basic matrices $M$, $K$ and $D$, and consequently the left-hand side matrix $A=M+\Delta t D+\Delta t^2 K$. Those all have to be sparse matrices (of the data type ``Eigen::SparseMatrix<double>``). You have to fill them in using COO triplet format with `Eigen::Triplet<double>` as learnt in class. Then, you can see the Cholesky decomposition code preparing the solver. This is done in the function `createGlobalMatrices()`.
 
 ### Integration.
 
@@ -63,9 +63,9 @@ The above will earn you $70\%$ of the grade. To get a full $100$, you must choos
  </br>
  2. Allow to apply random user-prescribed deformations of objects. For instance, instantaenous "squeezing" of an object to see it deform back after a time. **Level: easy-intermediate**. 
  </br>
-3. Implement the corotational elements method as learnt in class (*lecture 8*). That would require to use a solving method that does not rely on matrix factorization, like conjugate gradients. This is available through Eigen, but you'll have to figure out the details and proper initialization. **Level: intermediate-hard**.
+3. Implement the corotational elements method as learnt in class. That would require to use a solving method that does not rely on matrix factorization, like conjugate gradients. This is available through Eigen, but you'll have to figure out the details and proper initialization. **Level: intermediate-hard**.
 </br>
-4. Hack the visual artifacts of colliding only the touching vertices by sending impulses to the entire body, but weaker than the ones the vertx get. For instance, use some inverse distance weighting to send velocity impulses to the other vertices. *Level: easy*.
+4. Tweak the visual artifacts of colliding only the touching vertices by sending impulses to the entire body, but weaker than the ones the colliding vertex gets. For instance, use some inverse distance weighting to send velocity impulses to the other vertices. *Level: easy*.
  </br>
 
 You may invent your own extension as substitute to **one** in the list above, but it needs approval on the Lecturer's behalf **beforehand**.
@@ -170,7 +170,7 @@ Two functions: ``global2mesh()`` and ``mesh2global()`` update the values back an
 
 ## Submission
 
-The relevant part of code of the practical has to be submitted in a zip file by E-mail to the lecturer. The deadline is **4/Apr/2019 13:00PM**. 
+The relevant part of code of the practical has to be submitted in a zip file by E-mail to the lecturer.
 
 The practical must be done **in pairs**. Doing it alone requires a-priori permission. Any other combination (more than 2 people, or some fractional number) is not allowed. 
 
@@ -184,7 +184,7 @@ Here are detailed answers to common questions. Please read through whenever you 
 
 
 
-# Good work!
+# Success!
 
 
 
