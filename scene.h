@@ -446,8 +446,8 @@ public:
   /*********************************************************************
    This function handles a single time step
    1. Integrating velocities and position from forces and previous impulses
-   2. detecting collisions and generating collision constraints, alongside with given user constraints
-   3. Resolving constraints iteratively by updating velocities until the system is valid (or maxIterations has passed)
+   2. detecting collisions and generating collision constraints
+   3. Resolving collision constraints by updating velocities and positions
    *********************************************************************/
   
   void updateScene(double timeStep, double CRCoeff, const double tolerance, const int maxIterations){
@@ -459,27 +459,18 @@ public:
     mesh2global();
     
     
-    /*******************2. Creating and Aggregating constraints************************************/
+    /*******************2. Creating and Aggregating collision constraints************************************/
     
     vector<Constraint> activeConstraints;
-    
-    //user constraints
-    activeConstraints.insert(activeConstraints.end(), userConstraints.begin(), userConstraints.end());
-    
-    //barrier constraints
-    //activeConstraints.insert(activeConstraints.end(), barrierConstraints.begin(), barrierConstraints.end());
-    
+            
     //collision constraints
     for (int i=0;i<meshes.size();i++)
       for (int j=i+1;j<meshes.size(); j++)
         meshes[i].createCollisionConstraints(meshes[j], i==j, timeStep, CRCoeff, activeConstraints);
     
-    
-    /*******************3. Resolving velocity constraints iteratively until the velocities are valid************************************/
+    /*************3. Resolving all collision constraints sequentially*******************/
     int currIteration=0;
-    int zeroStreak=0;  //how many consecutive constraints are already below tolerance without any change; the algorithm stops if all are.
-    int currConstIndex=0;
-    while (zeroStreak<activeConstraints.size()&&(currIteration<maxIterations*globalPositions.size())){
+    for (int currConstIndex = 0;currConstIndex<activeConstraints.size();currConstIndex++){
       
       Constraint currConstraint=activeConstraints[currConstIndex];
       
@@ -492,23 +483,13 @@ public:
       
       //generating impulses
       VectorXd generatedImpulses;
-      if (currConstraint.resolveVelocityConstraint(constraintPositions, constraintVelocities, generatedImpulses, tolerance))
-        zeroStreak++;
-      else
-        zeroStreak=0;
-      
-      //cout<<"zeroStreak: "<<zeroStreak;
+      currConstraint.resolveVelocityConstraint(constraintPositions, constraintVelocities, generatedImpulses, tolerance);
       
       //correcting velocities according to impulses
       for (int i=0;i<currConstraint.globalIndices.size();i++){
         int currIndex=currConstraint.globalIndices(i);
         globalVelocities(currIndex)+=globalInvMasses(currIndex)*generatedImpulses(i);
-        //TODO: velocity bias
-        //if (timeStep>tolerance)
-        //  rawImpulses(fullConstraints[currConstraint].particleIndices(i))+=CRCoeff*currDiff(i)/timeStep;
       }
-      currIteration++;
-      currConstIndex=(currConstIndex+1)%(activeConstraints.size());
     }
     
     global2Mesh();
@@ -517,10 +498,7 @@ public:
     
     mesh2global();
     
-    currIteration=0;
-    zeroStreak=0;  //how many consecutive constraints are already below tolerance without any change; the algorithm stops if all are.
-    currConstIndex=0;
-    while (zeroStreak<activeConstraints.size()&&(currIteration<maxIterations*globalPositions.size())){
+    for (int currConstIndex = 0;currConstIndex<activeConstraints.size();currConstIndex++){
       
       Constraint currConstraint=activeConstraints[currConstIndex];
       
@@ -533,41 +511,20 @@ public:
       
       //generating impulses
       VectorXd generatedPosDiffs;
-      if (currConstraint.resolvePositionConstraint(constraintPositions, constraintVelocities, generatedPosDiffs, tolerance))
-        zeroStreak++;
-      else
-        zeroStreak=0;
+      currConstraint.resolvePositionConstraint(constraintPositions, constraintVelocities, generatedPosDiffs, tolerance);
       
-      //cout<<"zeroStreak: "<<zeroStreak<<endl;
-      
-      //correcting velocities according to impulses
+      //correcting positions according to impulses
       for (int i=0;i<currConstraint.globalIndices.size();i++){
         int currIndex=currConstraint.globalIndices(i);
         globalPositions(currIndex)+=generatedPosDiffs(i);
       }
-      currIteration++;
-      currConstIndex=(currConstIndex+1)%(activeConstraints.size());
     }
     
     global2Mesh();
     
+    //Extensions: you can add user constraints in here and resolve them sequentially.
+    
   }
-  
-  
-  /*void setPlatformBarriers(const MatrixXd& platV, const double CRCoeff){
-    
-    RowVector3d minPlatform=platV.colwise().minCoeff();
-    RowVector3d maxPlatform=platV.colwise().maxCoeff();
-    
-    //y value of maxPlatform is lower bound
-    for (int i=1;i<globalPositions.size();i+=3){
-      VectorXi coordIndices(1); coordIndices(0)=i;
-      VectorXd constraintInvMasses(1); constraintInvMasses(0)=globalInvMasses(i);
-      barrierConstraints.push_back(Constraint(BARRIER, INEQUALITY, coordIndices, constraintInvMasses, MatrixXd::Zero(1,1), maxPlatform(1),CRCoeff));
-    }
-    
-  }*/
-  
   
   //adding an object.
   void addMesh(const MatrixXd& V, const MatrixXi& boundF, const MatrixXi& T, const double youngModulus, const double PoissonRatio,  const double density, const bool isFixed, const RowVector3d& userCOM, const RowVector4d userOrientation){

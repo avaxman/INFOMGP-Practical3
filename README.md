@@ -1,8 +1,8 @@
 # Practical 3: Finite-Element Soft-Body Deformation
 
-## Handout date: 19/Mar/2021.
+## Handout date: 18/Mar/2022.
 
-## Deadline: 6/Apr/2021 09:00AM.
+## Deadline: 5/Apr/2022 08:59AM.
 
 
 The third practical is about simulating soft bodies with the finite-element method learned in class, where the material is covered in Lecture 9 and its associated lecture notes (about soft-body simulation). The system will handle basic constraints for you, and you will not be tested on them in the basic version.
@@ -18,11 +18,11 @@ This is the repository for the skeleton on which you will build your practical. 
 
 ## Background
 
-The practical runs in the same time loop (that can also be run step-by-step) as the previous practical. The objects are not limited to convex ones; every triangle mesh would do. The software automatically converts a surface OFF mesh into a tetrahedral mesh with [Tetgen](http://wias-berlin.de/software/index.jsp?id=TetGen&lang=1). There are no ambient forces but gravity in the basic version. However, a tetrahedral mesh can be provided by the scene files with the .MESH format.
+The practical runs in the same time loop (that can also be run step-by-step) as the previous practical. The objects are not limited to convex ones; every triangle mesh would do. The software automatically converts a surface OFF mesh into a tetrahedral mesh with [Tetgen](http://wias-berlin.de/software/index.jsp?id=TetGen&lang=1). A tetrahedral mesh can be provided by the scene files with the .MESH format. There are no ambient forces but gravity in the basic version.
 
-The first considerable difference in the representation of the mesh from the previous practicals is that ```origPositions``` replaces ```origV``` as a big vector in the ordering of $xyzxyz$ (3 number per vertex, total size $3\left| V \right|$), instead of a matrix where vertex coordinates are on rows. This is because you will need this form for the FE method matrix formulation. The rest of the file, including constraints resolution, is adapted to this. Moreover, the scene keeps a huge vector of all stacked coordinate vectors of the mesh, to make the constraint resolution a flat process that does not distinguish meshes---but you do not necessarily have to touch this in the practical, so it's FYI.
+The first considerable difference in the representation of the mesh from the previous practicals is that ```origPositions``` replaces ```origV``` as a big vector in the ordering of $xyzxyz$ (3 number per vertex, total size $3\left| V \right|$), instead of a matrix where vertex coordinates are on rows. This is because you will need this form for the FEM matrix formulation. The rest of the code, including constraints resolution, is adapted to this. Moreover, the scene keeps a huge vector of all stacked coordinate vectors of the mesh, to make the constraint resolution a flat process that does not distinguish meshes---but you do not necessarily have to touch this in the practical, so it's FYI.
 
-The second considerable difference is that every vertex now has its own volume and mass, and reacts in the world as its own independent object, for the purpose of collisions and constraints. The relationship between the different vertices of the same mesh is generally (unless constrained) done by the forces enacted on them by the FE system. So there is no more total mass and inertia tensor. As an example, in a collision only the colliding vertices move; the deformation this causes generates internal forces that move the entire object. As linear FE is far from perfect, this should cause some visual artifacts that you can witness in the demo.
+The second considerable difference is that every vertex now has its own volume and mass, and reacts in the world as its own independent object, for the purpose of collisions and constraints. The relationship between the different vertices of the same mesh is generally (unless constrained) done by the forces enacted on them by the FEM system. Thus, there is no more handling of center-of-mass nor inertia tensor. As an example, in a collision only the colliding vertices move; the deformation this causes generates internal forces that move the entire object. As linear FE is far from perfect, this should cause some visual artifacts that you can witness in the demo.
 
 The objects move in time steps by altering each vertex of the tet mesh, where the deformation is computed by solving the finite-element equation for movement as learnt in class (*Lecture 9*). For this, you will set up the mass $M$, damping $D$, and stiffness $K$ matrices at the beginning of time, and only again whenever the time step-size changes. Moreover, you will set up the Cholesky solver that factorizes the left-hand side $A$ of the entire system *once* in every *change* of time step (so it might be only once in the beginning of time unless you are keen to play with $\Delta t$).
 
@@ -59,13 +59,13 @@ The scene file contains the necessary material parameters: Young's Modulus, Pois
 The above will earn you $70\%$ of the grade. To get a full $100$, you must choose 1 of these 3 extension options, and augment the practical. Some will require minor adaptations to the GUI or the function structure which are easy to do. 
 
 
-1. Other than FEM, constrain the boundary edges of the mesh (the edges on the faces) to have flexiblity bounds as constraints, so they do not stretch or compress more than these bounds. *Level: easy*.
+1. Other than FEM, constrain the boundary edges of the mesh (the edges on the faces) to have flexiblity bounds as constraints, so they do not stretch or compress more than these bounds. **Level: easy**.
  </br>
  2. Allow to apply random user-prescribed deformations of objects. For instance, instantaenous "squeezing" of an object to see it deform back after a time. **Level: easy-intermediate**. 
  </br>
 3. Implement the corotational elements method as learnt in class. That would require to use a solving method that does not rely on matrix factorization, like conjugate gradients. This is available through Eigen, but you'll have to figure out the details and proper initialization. **Level: intermediate-hard**.
 </br>
-4. Tweak the visual artifacts of colliding only the touching vertices by sending impulses to the entire body, but weaker than the ones the colliding vertex gets. For instance, use some inverse distance weighting to send velocity impulses to the other vertices. *Level: easy*.
+4. Tweak the visual artifacts of colliding only the touching vertices by sending impulses to the entire body, but weaker than the ones the colliding vertex gets. For instance, use some inverse distance weighting to send velocity impulses to the other vertices. **Level: easy**.
  </br>
 
 You may invent your own extension as substitute to **one** in the list above, but it needs approval on the Lecturer's behalf **beforehand**.
@@ -170,7 +170,7 @@ Two functions: ``global2mesh()`` and ``mesh2global()`` update the values back an
 
 ## Submission
 
-The relevant part of code of the practical has to be submitted in a zip file by E-mail to the lecturer.
+The relevant part of code of the practical has to be submitted in the appropriate assignment slot on Blackboard.
 
 The practical must be done **in pairs**. Doing it alone requires a-priori permission. Any other combination (more than 2 people, or some fractional number) is not allowed. 
 

@@ -1,8 +1,8 @@
 #include <igl/opengl/glfw/Viewer.h>
+#include <igl/opengl/glfw/imgui/ImGuiPlugin.h>
 #include <igl/opengl/glfw/imgui/ImGuiMenu.h>
 #include <igl/opengl/glfw/imgui/ImGuiHelpers.h>
 #include <igl/copyleft/tetgen/tetrahedralize.h>
-#include <imgui/imgui.h>
 #include <iostream>
 #include "scene.h"
 #include "line_cylinders.h"
@@ -13,7 +13,7 @@ Eigen::MatrixXi F;
 igl::opengl::glfw::Viewer mgpViewer;
 
 float currTime = 0;
-
+bool animationHack;  //fixing the weird camera bug in libigl
 //initial values
 float timeStep = 0.02;
 float CRCoeff= 1.0;
@@ -148,7 +148,11 @@ bool pre_draw(igl::opengl::glfw::Viewer &viewer)
   using namespace std;
   
   if (viewer.core().is_animating){
-    scene.updateScene(timeStep, CRCoeff, tolerance, maxIterations);
+    if (!animationHack)
+      scene.updateScene(timeStep, CRCoeff, tolerance, maxIterations);
+    else
+      viewer.core().is_animating=false;
+    animationHack=false;
     currTime+=timeStep;
     //cout <<"currTime: "<<currTime<<endl;
     updateMeshes(viewer);
@@ -164,13 +168,12 @@ class CustomMenu : public igl::opengl::glfw::imgui::ImGuiMenu
   virtual void draw_viewer_menu() override
   {
     // Draw parent menu
-    ImGuiMenu::draw_viewer_menu();
+    //ImGuiMenu::draw_viewer_menu();
     
     // Add new group
     if (ImGui::CollapsingHeader("Algorithm Options", ImGuiTreeNodeFlags_DefaultOpen))
     {
       ImGui::InputFloat("CR Coeff",&CRCoeff,0,0,"%.2f");
-      
       
       if (ImGui::InputFloat("Time Step", &timeStep)) {
         mgpViewer.core().animation_max_fps = (((int)1.0/timeStep));
@@ -217,15 +220,19 @@ int main(int argc, char *argv[])
   mgpViewer.append_mesh();
   mgpViewer.callback_pre_draw = &pre_draw;
   mgpViewer.callback_key_down = &key_down;
-  mgpViewer.core().is_animating = false;
+  mgpViewer.core().is_animating = true;
+  animationHack = true;
   mgpViewer.core().animation_max_fps = 50.;
   updateMeshes(mgpViewer);
   CustomMenu menu;
-  mgpViewer.plugins.push_back(&menu);
+  igl::opengl::glfw::imgui::ImGuiPlugin plugin;
+  mgpViewer.plugins.push_back(&plugin);
+  plugin.widgets.push_back(&menu);
   
   cout<<"Press [space] to toggle continuous simulation" << endl;
   cout<<"Press 'S' to advance time step-by-step"<<endl;
   
+  updateMeshes(mgpViewer);
   mgpViewer.launch();
  
 }
